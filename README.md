@@ -11,8 +11,8 @@ A case-control digenic analysis method including codes to:
 - `R version 4.2.0`
 
 ## Input
-- PLINK Input Files: input.bed, input.bim, input.fam
-- Variant IDs and Gene Names File: variantIDs_genes.txt, sorted according to chromosome and position
+- PLINK Input Files: **input.bed, input.bim, input.fam**
+- Variant IDs and Gene Names File: **variantIDs_genes.txt**, sorted according to chromosome and position
 ```sh
 1:970725:G:A    PLEKHN1
 1:970735:G:A    PLEKHN1
@@ -28,7 +28,7 @@ A case-control digenic analysis method including codes to:
 .
 .
 ```
-- Phenotype Data File: phenotypes_with_pcs.txt with columns containing sample ID, PC1, PC2, PC3 and case (1) - control (0) status, respectively
+- Phenotype Data File: **phenotypes_with_pcs.txt** with columns containing sample ID, PC1, PC2, PC3 and case (1) - control (0) status, respectively
 
 ```sh
 Sample1 -0.43889992     -1.362575357    0.536021629     1
@@ -40,7 +40,7 @@ Sample3 -0.495990495    -1.377131679    0.626447258     1
 ```
 
 ## Output
-- final_burden_testing_result.txt
+- **final_burden_testing_result.txt**
 
 ```sh
 GenePair   P  OR  L95  U95  CaseCount  ControlCount
