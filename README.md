@@ -1,10 +1,18 @@
+## Introduction
+A case-control digenic analysis method including codes to:
+- Convert input plink files into a .raw format and prepare intermediate files to extract the binary combinations of input variants
+- Generate binary combinations of input variants per sample
+- Extract variant pairs observed in the proband (child) but not in their parents
+- Extract gene pairs from variant pairs and select those to be used in burden testing
+- Perform a covariate-adjusted burden test using Firth's logistic regression
+
 ## Dependencies
 - `python 3.7.3`
 - `R version 4.2.0`
 
 ## Input
-- PLINK Input Files: input.bed, input.bim, input.fam.
-- Variant IDs and Gene Names File: variantIDs_genes.txt. Sorted according to chromosome and position.
+- PLINK Input Files: input.bed, input.bim, input.fam
+- Variant IDs and Gene Names File: variantIDs_genes.txt, sorted according to chromosome and position
 ```sh
 1:970725:G:A    PLEKHN1
 1:970735:G:A    PLEKHN1
@@ -20,7 +28,7 @@
 .
 .
 ```
-- Phenotype Data File: phenotypes_with_pcs.txt. Columns contain sample ID, PC1, PC2, PC3 and case (1) - control (0) status, respectively.
+- Phenotype Data File: phenotypes_with_pcs.txt with columns containing sample ID, PC1, PC2, PC3 and case (1) - control (0) status, respectively
 
 ```sh
 Sample1 -0.43889992     -1.362575357    0.536021629     1
