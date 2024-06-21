@@ -1,6 +1,6 @@
 ## Introduction
 A case-control digenic analysis method including codes to:
-- Convert input plink files into a .raw format and prepare intermediate files to extract the binary combinations of input variants
+- Convert input plink files into .raw format and prepare intermediate files to extract the binary combinations of input variants
 - Generate binary combinations of input variants per sample
 - Extract variant pairs observed in the proband (child) but not in their parents
 - Extract gene pairs from variant pairs and select those to be used in burden testing
