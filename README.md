@@ -9,6 +9,7 @@ A case-control digenic analysis method including codes to:
 ## Dependencies
 - `python 3.7.3`
 - `R version 4.2.0`
+- `plink 1.9`
 
 ## Input
 - PLINK Input Files: **input.bed, input.bim, input.fam**
