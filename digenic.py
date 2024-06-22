@@ -35,7 +35,7 @@ with open(output_file, "w") as out_file:
     for data in sample_data:
         out_file.write(" ".join([data[1]] + data[6:]) + "\n")
 
-# Step 4: Run the digenic.py script to extract variant pairs
+# Step 4: Extract variant pairs
 def binary_combinations(input_array):
     binary_combos = []
     for combo in combinations(input_array, 2):
@@ -61,14 +61,14 @@ with open(input_file_path, "r") as file:
 
             for binary_combination in combs:
                 ofile.write(
-                    f"{sample_id} {'HET' if binary_combination[0][1]=='1' else 'HOM'}_{variant_names[binary_combination[0][0]]}@"
+                    f"{sample_id}\t{'HET' if binary_combination[0][1]=='1' else 'HOM'}_{variant_names[binary_combination[0][0]]}@"
                     f"{'HET' if binary_combination[1][1]=='1' else 'HOM'}_{variant_names[binary_combination[1][0]]}\n"
                 )
 
 # Step 5: Prepare the fam file
 fam_df = pd.read_csv(fam_file, delim_whitespace=True, header=None)
-fam_df = fam_df.iloc[:, 1:4]
-fam_df.columns = ["Proband", "Parent1", "Parent2"]
+fam_df = fam_df.iloc[:, [1, 2, 3]]
+fam_df = fam_df[(fam_df[1] != "0") & (fam_df[2] != "0")]
 fam_df.to_csv("fam.txt", sep="\t", index=False, header=False)
 
 # Step 6: Filter variant pairs based on family relationships
@@ -139,28 +139,22 @@ filtered_variants_df = pd.read_csv("filtered_variant_pairs.txt", delim_whitespac
 filtered_variants_df.columns = ["SampleID", "VariantPair"]
 
 # Extract gene pairs
-sample_gene_pairs = {}
-for idx, row in filtered_variants_df.iterrows():
-    sample_id = row['SampleID']
-    gene_pair = "@".join([var.split("_")[-1] for var in row['VariantPair'].split("@")])
-    if sample_id not in sample_gene_pairs:
-        sample_gene_pairs[sample_id] = set()
-    sample_gene_pairs[sample_id].add(gene_pair)
+filtered_variants_df['GenePair'] = filtered_variants_df['VariantPair'].apply(
+    lambda vp: '@'.join([v.split('_')[-1] for v in vp.split('@')])
+)
 
-# Create a new dataframe with unique gene pairs per sample
-data = []
-for sample_id, gene_pairs in sample_gene_pairs.items():
-    for gene_pair in gene_pairs:
-        data.append([sample_id, gene_pair])
-
-unique_gene_pairs_df = pd.DataFrame(data, columns=["SampleID", "GenePair"])
+# Drop duplicate gene pairs within the same sample
+unique_gene_pairs_df = filtered_variants_df.drop_duplicates(subset=["SampleID", "GenePair"])
 
 # Filter gene pairs with more than 5 observations
 gene_pair_counts = unique_gene_pairs_df['GenePair'].value_counts()
 gene_pairs_to_test = gene_pair_counts[gene_pair_counts > 5].index
 
 # Iterate over filtered gene pairs and perform Firth's logistic regression
-final_results = []
+burden_output_file = "final_burden_testing_result.txt"
+with open(burden_output_file, "w") as burden_file:
+    burden_file.write("GenePair\tP\tOR\tL95\tU95\tCaseCount\tControlCount\n")
+
 for gene_pair in gene_pairs_to_test:
     current_pair = unique_gene_pairs_df[unique_gene_pairs_df['GenePair'] == gene_pair]
     sample_ids = current_pair['SampleID'].tolist()
@@ -177,14 +171,8 @@ for gene_pair in gene_pairs_to_test:
     odds_ratio <- exp(coef(model)["carrier"])
     ci <- exp(confint(model)["carrier", ])
     result <- data.frame(GenePair="%s", P=p_value, OR=odds_ratio, L95=ci[1], U95=ci[2], CaseCount=%d, ControlCount=%d)
-    write.table(result, "firthoutput.txt", sep = "\t", quote = FALSE, row.names = FALSE, col.names = FALSE, append=TRUE)
+    write.table(result, "final_burden_testing_result.txt", sep = "\t", quote = FALSE, row.names = FALSE, col.names = FALSE, append=TRUE)
     """ % (gene_pair, case_count, control_count)
     r(r_script)
-    with open("firthoutput.txt", "r") as result_file:
-        final_results.append(result_file.readline().strip())
 
-# Write final results to file
-with open("final_burden_testing_result.txt", "w") as final_result_file:
-    final_result_file.write("GenePair\tP\tOR\tL95\tU95\tCaseCount\tControlCount\n")
-    for result in final_results:
-        final_result_file.write(result + "\n")
+    os.remove("currentinput.txt")
