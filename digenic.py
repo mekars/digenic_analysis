@@ -65,11 +65,20 @@ with open(input_file_path, "r") as file:
                     f"{'HET' if binary_combination[1][1]=='1' else 'HOM'}_{variant_names[binary_combination[1][0]]}\n"
                 )
 
-# Step 5: Prepare the fam file
+# Step 5: Prepare the fam file and sort variant_pairs.txt in the order of "proband", "father" and "mother"
 fam_df = pd.read_csv(fam_file, delim_whitespace=True, header=None)
 fam_df = fam_df.iloc[:, [1, 2, 3]]
 fam_df = fam_df[(fam_df[1] != "0") & (fam_df[2] != "0")]
 fam_df.to_csv("fam.txt", sep="\t", index=False, header=False)
+
+command1 = "awk '{for(i=1;i<=NF;i++){print $i \"\\t\" ++count}}' fam.txt > tmp1.txt"
+command2 = "awk 'FNR==NR{a[$1]=$0;next}{if($1 in a){print $0 \"\\t\" a[$1]}}' tmp1.txt variant_pairs.txt > tmp2.txt"
+command3 = "sort -g -k 4 tmp2.txt | cut -f -2 > variant_pairs.txt"
+subprocess.run(command1, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+subprocess.run(command2, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+subprocess.run(command3, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+os.remove("tmp1.txt")
+os.remove("tmp2.txt")
 
 # Step 6: Filter variant pairs based on family relationships
 does_print = False
@@ -108,9 +117,9 @@ with open(variant_pairs_file_name, "r") as variant_pairs_file:
                 variant_pairs_line = variant_pairs_file.readline()
             while variant_pairs_line:
                 variant_pairs_line = variant_pairs_line.strip()
-                varian_pairs_line_values = variant_pairs_line.split('\t')
-                sample_id = varian_pairs_line_values[0]
-                variants = varian_pairs_line_values[1]
+                variant_pairs_line_values = variant_pairs_line.split('\t')
+                sample_id = variant_pairs_line_values[0]
+                variants = variant_pairs_line_values[1]
                 variant_pairs_line = variant_pairs_file.readline()
                 if does_print:
                     print(f"{sample_id} {variants}")
@@ -158,8 +167,8 @@ with open(burden_output_file, "w") as burden_file:
 for gene_pair in gene_pairs_to_test:
     current_pair = unique_gene_pairs_df[unique_gene_pairs_df['GenePair'] == gene_pair]
     sample_ids = current_pair['SampleID'].tolist()
-    case_count = len([sample_id for sample_id in sample_ids if sample_id.startswith("1")])
-    control_count = len([sample_id for sample_id in sample_ids if sample_id.startswith("0")])
+    case_count = phenotypes_df[phenotypes_df['ID'].isin(sample_ids) & (phenotypes_df['phenotype'] == 1)].shape[0]
+    control_count = phenotypes_df[phenotypes_df['ID'].isin(sample_ids) & (phenotypes_df['phenotype'] == 0)].shape[0]
     current_phenotypes_df = phenotypes_df.copy()
     current_phenotypes_df['carrier'] = current_phenotypes_df['ID'].apply(lambda x: 1 if x in sample_ids else 0)
     current_phenotypes_df.to_csv("currentinput.txt", sep="\t", index=False)
